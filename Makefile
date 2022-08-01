@@ -6,6 +6,8 @@ COMMA=,
 REPOSITORY := jq
 VERSION := 1.6
 
+TAGS := $(VERSION) v$(VERSION)
+
 override DOCKER_BUILD_FLAGS+=--build-arg JQ_VERSION=$(VERSION)
 
 # Auto enable buildx when available
