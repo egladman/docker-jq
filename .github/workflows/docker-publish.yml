@@ -1,0 +1,58 @@
+name: Publish Image
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+on:
+  push:
+    branches: [ main ]
+    # Publish semver tags as releases.
+    tags: [ 'v*.*.*' ]
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  build:
+
+    strategy:
+      matrix:
+        registry: [ghcr.io, docker.io]
+        
+        include:
+          - registry: ghcr.io
+            registry_username: ${{ github.actor }}
+            repository: ${{ github.repository_owner }}/jq
+            token_secret_name: GITHUB_TOKEN
+
+          - registry: docker.io
+            registry_username: egladman
+            repository: egladman/jq
+            token_secret_name: DOCKERHUB_TOKEN
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      # https://github.com/docker/login-action
+      - name: Log into registry ${{ matrix.registry }}
+        uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
+        with:
+          registry: ${{ matrix.registry }}
+          username: ${{ matrix.registry_username }}
+          password: ${{ secrets[matrix.token_secret_name] }}
+  
+      - name: Build/Push image
+        run: make image-push REPOSITORY=${{ matrix.repository }} REPOSITORY_PREFIX=${{ matrix.registry }}
