@@ -45,6 +45,10 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+        with:
+          config-inline: |
+            [worker.oci]
+              max-parallelism = 2
 
       # https://github.com/docker/login-action
       - name: Log into registry ${{ matrix.registry }}
@@ -55,4 +59,6 @@ jobs:
           password: ${{ secrets[matrix.token_secret_name] }}
   
       - name: Build/Push image
-        run: make image-push REPOSITORY=${{ matrix.repository }} REPOSITORY_PREFIX=${{ matrix.registry }}
+        run: |
+          make image-push REPOSITORY=${{ matrix.repository }} REPOSITORY_PREFIX=${{ matrix.registry }}
+          make image-push REPOSITORY=${{ matrix.repository }} REPOSITORY_PREFIX=${{ matrix.registry }} VARIANT=busybox

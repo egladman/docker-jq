@@ -3,7 +3,7 @@ ARG ALPINE_VERSION=edge
 ARG UID=5355
 ARG NPROC=
 ARG DESTDIR=/out
-
+ARG VARIANT=core
 
 FROM ${REGISTRY}alpine:${ALPINE_VERSION} as builder
 
@@ -22,15 +22,29 @@ RUN set -eux; \
     ;
 
 
-FROM builder as jq-rootfs
+FROM builder as core-addon
 
 ARG DESTDIR
 RUN set -eux; \
-    mkdir -p \
-      ${DESTDIR}/bin \
-      ${DESTDIR}/sbin \
-    ; \
+    mkdir -p ${DESTDIR}
+
+
+FROM builder as busybox-addon
+
+ARG DESTDIR
+RUN set -eux; \
+    mkdir -p ${DESTDIR}/bin; \
     /bin/busybox.static --install "${DESTDIR}/bin"
+
+
+FROM ${VARIANT}-addon as selected-addon
+
+
+FROM builder as runtime-rootfs
+
+ARG DESTDIR
+RUN set -eux; \
+    mkdir -p ${DESTDIR}/bin
 
 
 FROM builder as jq-build
@@ -63,8 +77,9 @@ FROM scratch
 ARG DESTDIR
 ARG UID
 
-COPY --from=jq-rootfs ${DESTDIR} /
+COPY --from=runtime-rootfs ${DESTDIR}/ /
 COPY --from=jq-build ${DESTDIR}/bin/ /bin
+COPY --from=selected-addon ${DESTDIR}/ /
 
 USER $UID
 

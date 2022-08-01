@@ -5,15 +5,21 @@ COMMA=,
 
 REPOSITORY := jq
 VERSION := 1.6
+VARIANT := core
 
 TAGS := $(VERSION) v$(VERSION)
 
-override DOCKER_BUILD_FLAGS+=--build-arg JQ_VERSION=$(VERSION)
+override DOCKER_BUILD_FLAGS += --build-arg JQ_VERSION=$(VERSION) \
+                               --build-arg VARIANT=$(VARIANT)
 
 # Auto enable buildx when available
 BUILDX_ENABLED := $(shell docker buildx version > /dev/null 2>&1 && printf true || printf false)
 BUILDX_PLATFORMS := linux/amd64 linux/arm64 linux/arm/v7 linux/arm/v6 linux/386 linux/ppc64le linux/s390x linux/riscv64
 BUILDX_FLAGS :=
+
+ifneq ($(VARIANT), core)
+    override TAGS := $(addsuffix -$(VARIANT),$(TAGS))
+endif
 
 ifdef REPOSITORY_PREFIX
     override REPOSITORY := $(REPOSITORY_PREFIX)/$(REPOSITORY)
