@@ -12,7 +12,7 @@ override DOCKER_BUILD_FLAGS+=--build-arg JQ_VERSION=$(VERSION)
 
 # Auto enable buildx when available
 BUILDX_ENABLED := $(shell docker buildx version > /dev/null 2>&1 && printf true || printf false)
-BUILDX_PLATFORMS := linux/amd64 linux/arm64 linux/arm/v7 linux/arm/v6 linux/386 linux/ppc64le linux/s390x
+BUILDX_PLATFORMS := linux/amd64 linux/arm64 linux/arm/v7 linux/arm/v6 linux/386 linux/ppc64le linux/s390x linux/riscv64
 BUILDX_FLAGS :=
 
 ifdef REPOSITORY_PREFIX

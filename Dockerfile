@@ -1,11 +1,11 @@
 ARG REGISTRY=docker.io/
-ARG ALPINE_VERSION=3.16
+ARG ALPINE_VERSION=edge
 ARG UID=5355
-ARG NPROC=4
+ARG NPROC=
 ARG DESTDIR=/out
 
 
-FROM ${REGISTRY}alpine:${ALPINE_VERSION} AS builder
+FROM ${REGISTRY}alpine:${ALPINE_VERSION} as builder
 
 RUN set -eux; \
     apk add \
@@ -13,6 +13,7 @@ RUN set -eux; \
         autoconf \
         automake \
         bison \
+        busybox-static \
         gcc \
         git \
         musl-dev \
@@ -24,7 +25,12 @@ RUN set -eux; \
 FROM builder as jq-rootfs
 
 ARG DESTDIR
-RUN mkdir -p ${DESTDIR}/sbin
+RUN set -eux; \
+    mkdir -p \
+      ${DESTDIR}/bin \
+      ${DESTDIR}/sbin \
+    ; \
+    /bin/busybox.static --install "${DESTDIR}/bin"
 
 
 FROM builder as jq-build
@@ -36,7 +42,11 @@ ARG DESTDIR
 ARG NPROC
 
 RUN set -eux; \
-    git clone --recursive -j${NPROC} ${JQ_GIT_PREFIX}/jq src; \
+    git_opts=""; \
+    if [ -n "$NPROC" ]; then \
+       git_opts="-j${NPROC}"; \
+    fi; \
+    git clone --recursive $git_opts ${JQ_GIT_PREFIX}/jq src; \
     cd src; \
     git reset --hard $JQ_GIT_TAG; \
     autoreconf -fi; \
@@ -54,8 +64,8 @@ ARG DESTDIR
 ARG UID
 
 COPY --from=jq-rootfs ${DESTDIR} /
-COPY --from=jq-build ${DESTDIR}/bin/ /sbin
+COPY --from=jq-build ${DESTDIR}/bin/ /bin
 
 USER $UID
 
-CMD ["/sbin/jq"]
+CMD ["/bin/jq"]

@@ -1,6 +1,17 @@
 # docker-jq
 
-A tiny ~2.5MB statically linked jq docker image with wide architecture support
+A tiny ~3.5MB statically linked jq docker image (with busybox).
+
+Supports all upstream alpine platforms:
+
+- `linux/amd64`
+- `linux/arm64`
+- `linux/arm/v7`
+- `linux/arm/v6`
+- `linux/386`
+- `linux/ppc64le`
+- `linux/s390x`
+- `linux/riscv64`
 
 ## Pull
 
@@ -28,6 +39,6 @@ docker run --rm jq:1.6 jq --version
 make image
 ```
 
-## Acknowledgement
+## Acknowledgements
 
 - https://github.com/stedolan/jq
