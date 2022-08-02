@@ -19,8 +19,8 @@ IMG_VARIANT := core
 GIT_SHORT_HASH := $(shell $(GIT) rev-parse --short HEAD || printf undefined)
 
 IMG_TAGS := $(IMG_VERSION) \
-        v$(IMG_VERSION) \
-        git-$(GIT_SHORT_HASH)
+            v$(IMG_VERSION) \
+            git-$(GIT_SHORT_HASH)
 
 ifeq ($(LATEST_ENABLED),true)
 override IMG_TAGS += latest
@@ -49,8 +49,8 @@ endif
 
 # Construct '--tag <value>' docker build argument
 ifdef IMG_TAGS
-		IMG_NAMES := $(foreach t,$(IMG_TAGS),$(IMG_REPOSITORY):$(t))
-		s := --tag
+    IMG_NAMES := $(foreach t,$(IMG_TAGS),$(IMG_REPOSITORY):$(t))
+    s := --tag
     override DOCKER_BUILD_FLAGS += $(s)$(CHAR_SPACE)$(subst $(CHAR_SPACE),$(CHAR_SPACE)$(s)$(CHAR_SPACE),$(strip $(IMG_NAMES)))
 endif
 
