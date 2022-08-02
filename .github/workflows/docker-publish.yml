@@ -62,5 +62,5 @@ jobs:
   
       - name: Build/Push image
         run: |
-          make image-push REPOSITORY=${{ matrix.repository }} REPOSITORY_PREFIX=${{ matrix.registry }}
-          make image-push REPOSITORY=${{ matrix.repository }} REPOSITORY_PREFIX=${{ matrix.registry }} VARIANT=busybox
+          make push IMG_REPOSITORY=${{ matrix.repository }} IMG_REPOSITORY_PREFIX=${{ matrix.registry }}
+          make push IMG_REPOSITORY=${{ matrix.repository }} IMG_REPOSITORY_PREFIX=${{ matrix.registry }} IMG_VARIANT=busybox

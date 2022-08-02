@@ -1,50 +1,88 @@
+-include .makerc
+
 DOCKER := docker
+GIT := git
+SED := sed
 
-SPACE=$() $()
-COMMA=,
+CHAR_SPACE=$() $()
+CHAR_COMMA=,
 
-REPOSITORY := jq
-VERSION := 1.6
-VARIANT := core
+var_info = $(info [INFO] $(1)='$($(1))')
 
-TAGS := $(VERSION) v$(VERSION)
+# Automatically use Docker buildx plugin when found
+BUILDX_ENABLED := $(shell $(DOCKER) buildx version > /dev/null 2>&1 && printf true || printf false)
+LATEST_ENABLED ?= true
 
-override DOCKER_BUILD_FLAGS += --build-arg JQ_VERSION=$(VERSION) \
-                               --build-arg VARIANT=$(VARIANT)
+IMG_REPOSITORY := jq
+IMG_VERSION := 1.6
+IMG_VARIANT := core
+GIT_SHORT_HASH := $(shell $(GIT) rev-parse --short HEAD || printf undefined)
 
-# Auto enable buildx when available
-BUILDX_ENABLED := $(shell docker buildx version > /dev/null 2>&1 && printf true || printf false)
-BUILDX_PLATFORMS := linux/amd64 linux/arm64 linux/arm/v7 linux/arm/v6 linux/386 linux/ppc64le linux/s390x linux/riscv64
-BUILDX_FLAGS :=
+IMG_TAGS := $(IMG_VERSION) \
+        v$(IMG_VERSION) \
+        git-$(GIT_SHORT_HASH)
 
-ifneq ($(VARIANT), core)
-    override TAGS := $(addsuffix -$(VARIANT),$(TAGS))
+ifeq ($(LATEST_ENABLED),true)
+override IMG_TAGS += latest
 endif
 
-ifdef REPOSITORY_PREFIX
-    override REPOSITORY := $(REPOSITORY_PREFIX)/$(REPOSITORY)
+# Image specific build args
+override DOCKER_BUILD_FLAGS += --build-arg JQ_VERSION=$(IMG_VERSION) \
+                               --build-arg VARIANT=$(IMG_VARIANT)
+
+DOCKER_BUILDX_PLATFORMS := linux/amd64 \
+                           linux/arm64 \
+                           linux/arm/v7 \
+                           linux/arm/v6 \
+                           linux/386 \
+                           linux/ppc64le \
+                           linux/s390x \
+                           linux/riscv64
+
+ifneq ($(IMG_VARIANT), core)
+    override IMG_TAGS := $(addsuffix -$(IMG_VARIANT),$(IMG_TAGS))
 endif
 
-ifdef TAGS
-    TAG_PREFIX := --tag $(REPOSITORY):
-    override DOCKER_BUILD_FLAGS += $(TAG_PREFIX)$(subst $(SPACE),$(SPACE)$(TAG_PREFIX),$(strip $(TAGS)))
+ifdef IMG_REPOSITORY_PREFIX
+    override IMG_REPOSITORY := $(IMG_REPOSITORY_PREFIX)/$(IMG_REPOSITORY)
 endif
 
+# Construct '--tag <value>' docker build argument
+ifdef IMG_TAGS
+		IMG_NAMES := $(foreach t,$(IMG_TAGS),$(IMG_REPOSITORY):$(t))
+		s := --tag
+    override DOCKER_BUILD_FLAGS += $(s)$(CHAR_SPACE)$(subst $(CHAR_SPACE),$(CHAR_SPACE)$(s)$(CHAR_SPACE),$(strip $(IMG_NAMES)))
+endif
+
+# Construct '--platform <value>,<value>' buildx argument
 ifeq ($(BUILDX_ENABLED),true)
-    override DOCKER := $(DOCKER) buildx
-    override DOCKER_BUILD_FLAGS += --platform $(subst $(SPACE),$(COMMA),$(BUILDX_PLATFORMS))
+    override DOCKER := $(DOCKER) buildx $(DOCKER_BUILDX_FLAGS)
+    override DOCKER_BUILD_FLAGS += --platform $(subst $(CHAR_SPACE),$(CHAR_COMMA),$(DOCKER_BUILDX_PLATFORMS))
 endif
 
-$(info Docker buildx enabled: $(BUILDX_ENABLED))
+.PHONY: build push info
+.DEFAULT_GOAL := build
 
-.PHONY: image image-push
+#@ info        : Print relevant Make variables (useful for debugging)
+info:
+	$(call var_info,BUILDX_ENABLED)
+	$(call var_info,DOCKER_BUILDX_PLATFORMS)
+	$(call var_info,IMG_VARIANT)
+	$(call var_info,IMG_TAGS)
+	$(call var_info,IMG_NAMES)
 
-image:
+#@ build       : Build docker image(s)
+build:
 	$(DOCKER) build . $(DOCKER_BUILD_FLAGS)
 
-image-push:
+#@ push        : Push docker image(s)
+push:
 ifeq ($(BUILDX_ENABLED),true)
-	$(MAKE) image DOCKER_BUILD_FLAGS+="--push"
+	$(MAKE) DOCKER_BUILD_FLAGS+="--push"
 else
-	$(DOCKER) push $(REPOSITORY) --all-tags
+	$(DOCKER) push $(IMG_REPOSITORY) $(IMG_NAMES)
 endif
+
+#@ help        : This text
+help: $(lastword $(MAKEFILE_LIST))
+	@$(SED) -n 's/^#@//p' $<
