@@ -20,7 +20,8 @@ GIT_SHORT_HASH := $(shell $(GIT) rev-parse --short HEAD || printf undefined)
 
 IMG_TAGS := $(IMG_VERSION) \
             v$(IMG_VERSION) \
-            git-$(GIT_SHORT_HASH)
+            $(IMG_VERSION)-git-$(GIT_SHORT_HASH) \
+            v$(IMG_VERSION)-git-$(GIT_SHORT_HASH)
 
 ifeq ($(LATEST_ENABLED),true)
     override IMG_TAGS += latest
