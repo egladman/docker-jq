@@ -23,7 +23,7 @@ IMG_TAGS := $(IMG_VERSION) \
             git-$(GIT_SHORT_HASH)
 
 ifeq ($(LATEST_ENABLED),true)
-override IMG_TAGS += latest
+    override IMG_TAGS += latest
 endif
 
 # Image specific build args
