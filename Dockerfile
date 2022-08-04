@@ -62,6 +62,10 @@ RUN set -eux; \
     fi; \
     git clone --recursive $git_opts ${JQ_GIT_PREFIX}/jq src; \
     cd src; \
+    if [ $(echo $JQ_VERSION | awk '{split($0,a,"."); print a[3]}') = '0' ]; then \
+       # The upstream project tags their releases in a wierd way :(
+       JQ_GIT_TAG=jq-$(echo $JQ_VERSION | awk '{split($0,a,"."); print a[1]"."a[2]}'); \
+    fi; \
     git reset --hard $JQ_GIT_TAG; \
     autoreconf -fi; \
     ./configure \
