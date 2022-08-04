@@ -14,6 +14,7 @@ RUN set -eux; \
         automake \
         bison \
         busybox-static \
+        flex \
         gcc \
         git \
         musl-dev \
@@ -62,7 +63,9 @@ RUN set -eux; \
     fi; \
     git clone --recursive $git_opts ${JQ_GIT_PREFIX}/jq src; \
     cd src; \
-    if [ $(echo $JQ_VERSION | awk '{split($0,a,"."); print a[3]}') = '0' ]; then \
+    # Strip the trailing '.0' if passed <major>.<minor>.0
+    PATCH=$(echo $JQ_VERSION | awk '{split($0,a,"."); print a[3]}'); \
+    if [ "$PATCH" = '0' ]; then \
        # The upstream project tags their releases in a wierd way :(
        JQ_GIT_TAG=jq-$(echo $JQ_VERSION | awk '{split($0,a,"."); print a[1]"."a[2]}'); \
     fi; \

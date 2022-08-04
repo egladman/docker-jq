@@ -1,3 +1,9 @@
+# Trust me this is intentional
+-include .makerc
+ifeq ($(IMG_VERSION),)
+    EDGE_ENABLED = true
+    override IMG_VERSION = edge
+endif
 -include .makerc
 
 DOCKER := docker
@@ -10,35 +16,34 @@ BUILDARG_PREFIX := .BUILD_
 
 word-dot = $(word $2,$(subst ., ,$1))
 
-# We expect IMG_VERSION to be <major>.<minor>.<patch>
-IMG_VERSION_MAJOR = $(call word-dot,$(IMG_VERSION),1)
-IMG_VERSION_MAJOR_MINOR := $(IMG_VERSION_MAJOR).$(call word-dot,$(IMG_VERSION),2)
-
-ifeq ($(and $(IMG_VERSION),$(IMG_REPOSITORY),$(IMG_VARIANT)),)
-    $(error One or more variables are unset or empty strings. See IMG_VERSION, IMG_REPOSITORY, IMG_VARIANT)
+ifeq ($(and $(IMG_REPOSITORY),$(IMG_VARIANT)),)
+    $(error One or more variables are unset or empty strings. See IMG_REPOSITORY, IMG_VARIANT)
 endif
 
 # Automatically use Docker buildx plugin when found
 BUILDX_ENABLED := $(shell $(DOCKER) buildx version > /dev/null 2>&1 && printf true || printf false)
 LATEST_ENABLED ?= true
+EDGE_ENABLED ?= false
 
 # Build images for the following platforms
 IMG_PLATFORMS ?= linux/amd64 linux/arm64
 
+IMG_VERSION_MAJOR = $(call word-dot,$(IMG_VERSION),1)
+IMG_VERSION_MAJOR_MINOR := $(IMG_VERSION_MAJOR).$(call word-dot,$(IMG_VERSION),2)
 GIT_SHORT_HASH := $(shell $(GIT) rev-parse --short HEAD || printf undefined)
 
 IMG_TAGS := $(IMG_VERSION) \
-            $(IMG_VERSION_MAJOR) \
-            $(IMG_VERSION_MAJOR_MINOR) \
-            v$(IMG_VERSION) \
-            v$(IMG_VERSION_MAJOR) \
-            v$(IMG_VERSION_MAJOR_MINOR) \
-            $(IMG_VERSION)-git-$(GIT_SHORT_HASH) \
-            $(IMG_VERSION_MAJOR)-git-$(GIT_SHORT_HASH) \
-            $(IMG_VERSION_MAJOR_MINOR)-git-$(GIT_SHORT_HASH) \
-            v$(IMG_VERSION)-git-$(GIT_SHORT_HASH) \
-            v$(IMG_VERSION_MAJOR)-git-$(GIT_SHORT_HASH) \
-            v$(IMG_VERSION_MAJOR_MINOR)-git-$(GIT_SHORT_HASH)
+            $(IMG_VERSION)-git-$(GIT_SHORT_HASH)
+
+ifeq ($(EDGE_ENABLED),false)
+    override IMG_TAGS += $(IMG_VERSION_MAJOR) \
+                         $(IMG_VERSION_MAJOR_MINOR) \
+                         v$(IMG_VERSION_MAJOR) \
+                         v$(IMG_VERSION_MAJOR_MINOR) \
+                         v$(IMG_VERSION)-git-$(GIT_SHORT_HASH) \
+                         v$(IMG_VERSION_MAJOR)-git-$(GIT_SHORT_HASH) \
+                         v$(IMG_VERSION_MAJOR_MINOR)-git-$(GIT_SHORT_HASH)
+endif
 
 ifeq ($(LATEST_ENABLED),true)
     override IMG_TAGS += latest
