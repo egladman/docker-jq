@@ -8,6 +8,12 @@ CHAR_SPACE=$() $()
 CHAR_COMMA=,
 BUILDARG_PREFIX := .BUILD_
 
+word-dot = $(word $2,$(subst ., ,$1))
+
+# We expect IMG_VERSION to be <major>.<minor>.<patch>
+IMG_VERSION_MAJOR = $(call word-dot,$(IMG_VERSION),1)
+IMG_VERSION_MAJOR_MINOR := $(IMG_VERSION_MAJOR).$(call word-dot,$(IMG_VERSION),2)
+
 ifeq ($(and $(IMG_VERSION),$(IMG_REPOSITORY),$(IMG_VARIANT)),)
     $(error One or more variables are unset or empty strings. See IMG_VERSION, IMG_REPOSITORY, IMG_VARIANT)
 endif
@@ -22,9 +28,17 @@ IMG_PLATFORMS ?= linux/amd64 linux/arm64
 GIT_SHORT_HASH := $(shell $(GIT) rev-parse --short HEAD || printf undefined)
 
 IMG_TAGS := $(IMG_VERSION) \
+            $(IMG_VERSION_MAJOR) \
+            $(IMG_VERSION_MAJOR_MINOR) \
             v$(IMG_VERSION) \
+            v$(IMG_VERSION_MAJOR) \
+            v$(IMG_VERSION_MAJOR_MINOR) \
             $(IMG_VERSION)-git-$(GIT_SHORT_HASH) \
-            v$(IMG_VERSION)-git-$(GIT_SHORT_HASH)
+            $(IMG_VERSION_MAJOR)-git-$(GIT_SHORT_HASH) \
+            $(IMG_VERSION_MAJOR_MINOR)-git-$(GIT_SHORT_HASH) \
+            v$(IMG_VERSION)-git-$(GIT_SHORT_HASH) \
+            v$(IMG_VERSION_MAJOR)-git-$(GIT_SHORT_HASH) \
+            v$(IMG_VERSION_MAJOR_MINOR)-git-$(GIT_SHORT_HASH)
 
 ifeq ($(LATEST_ENABLED),true)
     override IMG_TAGS += latest
