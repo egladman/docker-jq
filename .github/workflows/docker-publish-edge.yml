@@ -62,5 +62,5 @@ jobs:
   
       - name: Build/Push image
         run: |
-          make push IMG_VERSION= .BUILD_JQ_GIT_TAG=HEAD BUILDX_ENABLED=false LATEST_ENABLED=false IMG_REPOSITORY=${{ matrix.repository }} IMG_REPOSITORY_PREFIX=${{ matrix.registry }}
-          make push IMG_VERSION= .BUILD_JQ_GIT_TAG=HEAD BUILDX_ENABLED=false LATEST_ENABLED=false IMG_REPOSITORY=${{ matrix.repository }} IMG_REPOSITORY_PREFIX=${{ matrix.registry }} IMG_VARIANT=busybox
+          make push IMG_VERSION= .BUILD_JQ_GIT_TAG=HEAD LATEST_ENABLED=false IMG_REPOSITORY=${{ matrix.repository }} IMG_REPOSITORY_PREFIX=${{ matrix.registry }}
+          make push IMG_VERSION= .BUILD_JQ_GIT_TAG=HEAD LATEST_ENABLED=false IMG_REPOSITORY=${{ matrix.repository }} IMG_REPOSITORY_PREFIX=${{ matrix.registry }} IMG_VARIANT=busybox

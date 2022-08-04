@@ -88,7 +88,9 @@ push:
 ifeq ($(BUILDX_ENABLED),true)
 	$(MAKE) DOCKER_BUILD_FLAGS+="--push"
 else
-	$(DOCKER) push $(IMG_REPOSITORY) $(IMG_NAMES)
+	@for i in $(IMG_NAMES); do \
+    $(DOCKER) push $$i; \
+	done
 endif
 
 #@ help        : This text
