@@ -46,8 +46,8 @@ docker run --rm jq:1.6 jq --version
 ## Build
 
 ```
-make image
-make image IMG_VARIANT=busybox
+make
+make IMG_VARIANT=busybox
 ```
 
 ## Acknowledgements
